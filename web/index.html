@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Histogram Equalization</title>
+<link rel="icon" href="img/logo.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.0.1/lib/anime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<head>
+<style>
+	#myKernel   {position: absolute;}
+	#achorKernel   {position: absolute;}
+	.header {
+		  padding: 30px;
+		  text-align: center;
+		  background: #99cfdd;
+		  color: white;
+		  font-size: 30px;
+		}
+	footer {
+	  padding: 30px;
+	  text-align: center;
+	  background: #99cfdd;
+	  color: white;
+	  font-size: 30px;
+	}
+	
+	div{
+		text-align: center;
+		padding: 10px;
+	}
+	
+	.slidecontainer {
+  width: 100%;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 25px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: #4CAF50;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Histogram Equalization</h1>
+  <p>Image processing</p>
+</div>
+<div>
+    สวัสดีครับ เว็บนี้จะเป็นเว็บที่อธิบายการทำงานในส่วนของ Image processing ในเรื่องของการทำ Histogram Equalization กัน
+สมมุติว่าเรามีรูปภาพทะเลดังรูปด้านล่าง
+</div>
+<div>
+	<img id="sea" src=""  alt="The sea" >
+</div>
+<div style="margin-top: 20px;">
+  ซึ่งรูปดังกล่าวนั้นสมมุติว่ามีขนาด 15 x 23 
+</div>
+<div >
+	<canvas id="myCanvas" width="15" height="23" style="border:1px solid #d3d3d3;"></canvas>
+	<p><b>(15 x 23)</b><p>
+</div>
+<div>
+	<div style="margin-top: 20px;">
+		หรือก็คือหากเราขยายภาพจนสามารถเห็น Pixel แต่ละจุดในภาพนั้น ก็จะมีจุด pixel แนวนอน 15 จุด และ pixel แนวตั้ง 23 จุดดังรูป
+	</div>
+	<div>
+		<canvas id="myCanvasMain" width="1080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	</div>
+	<div style="margin-top: 20px;">
+		ซึ่งสีใน Pixel แต่ละจุดนั้นเกิดจากค่าสีที่แตกต่างกัน จากตัวอย่างในรูป เป็นรูป Graysclae ที่ค่าแต่ละ Pixel มีได้ตั้งแต่ 0-255 ดังรูป
+	</div>
+	<canvas id="myCanvasWithPixelValue" width="1080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+    
+	<div>
+		ตอนแรกเราจะทำ Histogram ก่อน หรือก็คือการนับค่าสีที่เท่ากันว่ามีกี่จำนวนบ้าง
+	</div>
+	<canvas id="myHistogram" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<div>
+		หลังจากได้ Histogram แล้ว เพื่อให้เห็นภาพมากขึ้นขอขยายค่า กราฟแกน Y เป็น 345
+	</div>
+	<canvas id="myHistogramRescale" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<div>
+		หลังจากนั้นทำ Comulative Histogram ดังนี้
+	</div>
+	<div id="CSUM_EQUATION" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">\begin{equation*}
+		cdf(i) = \sum_{j=0}^i h(j)
+	 \end{equation*}</div>
+	<div>
+	</div>
+	<canvas id="myCHistogram" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+
+	 <div>
+		เมื่อได้ Comulative Histogram แล้วก็นำมาคำนวณ histogram equalization ดังนี้
+	</div>
+	 <div id="HE_EQUATION" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">\begin{equation*}
+		h(v) = round\left(\frac{cdf(v) - cdf_{min}}{(M \times N) - cdf_{min}} \times (L - 1)\right)
+	 \end{equation*}</div>
+
+	 <div>
+	</div>
+	<canvas id="myCLine" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	
+	<!-- <div class="slidecontainer" style="margin-bottom: 10em">
+		<p>Increate speed: <span id="sliderShow">5</span></p> 
+		<input type="range" min="1" max="100" value="1" class="slider" id="myRange">
+	</div> -->
+	
+</div>
+
+<script>
+
+
+
+var duration = 10;
+var delay = 500;
+var zoomSize = 30;
+var img = document.getElementById("sea");
+img.src = "img\\HE Image resize.png";
+var kernelWidth = 3;
+var kernelHeight = 3;
+var kernelShowValue = [["1/9","1/9","1/9"],["1/9","1/9","1/9"],["1/9","1/9","1/9"]];
+var kernelValue = [[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]];
+var grayScaleValue = [];
+  img.onload = function() {
+  var c = document.getElementById("myCanvas");
+  var ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  
+  {
+	  var cMain = document.getElementById("myCanvasMain");
+	  var ctxMain = cMain.getContext("2d");
+	  cMain.width = zoomSize * img.width;
+	  cMain.height = zoomSize * img.height;
+	  
+	  var i;
+	  var j;
+	  for (i = 0; i < img.height; i += 1) {
+		 for(j=0;j<img.width;j += 1){
+			var imgData = ctx.getImageData(j,i, 1, 1);
+			
+			ctxMain.fillStyle = 'rgb(' + imgData.data[0] + ', ' +
+							   imgData.data[1] + ', '+imgData.data[2]+')';
+			ctxMain.fillRect(j * zoomSize, i * zoomSize, zoomSize, zoomSize);
+			ctxMain.fillStyle = "green";
+			ctxMain.font = "15px Kanit";
+			var grey = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11) 
+		}
+	  }
+  }
+  anima3();
+};
+
+
+
+function anima3(){
+	var id = setInterval(frame, 200);
+	var cMain = document.getElementById("myCanvasWithPixelValue");
+	var ctxMain = cMain.getContext("2d");
+
+	var c = document.getElementById("myCanvas");
+	var ctx = c.getContext("2d");
+	var select = 0;
+	
+
+	var isHistogramFinish = false;
+	var isHistogramRescaleFinish = false;
+	var isCHistogramFinish = false;
+	var histogramX = [];
+	var histogramY = [];
+	var cHistogramY = [];
+	var cLineY = [];
+   function frame() {
+		if(!isHistogramFinish){
+			{
+				cMain.width = zoomSize * img.width;
+				cMain.height = zoomSize * img.height;
+				
+				var i;
+				var j;
+				for (i = 0; i < img.height; i += 1) {
+					grayScaleValue.push([]);
+					for(j=0;j<img.width;j += 1){
+						var imgData = ctx.getImageData(j,i, 1, 1);
+						var grey = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+						ctxMain.fillStyle = 'rgb(' + imgData.data[0] + ', ' +
+										imgData.data[1] + ', '+imgData.data[2]+')';
+						ctxMain.fillRect(j * zoomSize, i * zoomSize, zoomSize, zoomSize);
+						ctxMain.strokeStyle = 'black';
+						ctxMain.lineWidth = 5;
+						ctxMain.fillStyle = "white";
+						if(Math.round(grey) == select){
+							ctxMain.fillStyle = "Red";
+							ctxMain.strokeStyle = 'Red';
+							ctxMain.lineWidth = 2;
+						}
+						ctxMain.font = "15px Kanit";
+						
+						ctxMain.strokeText(Math.round(grey),j * zoomSize+3, i * zoomSize+13);
+						ctxMain.fillText(Math.round(grey),j * zoomSize+3, i * zoomSize+13);
+						grayScaleValue[i].push(Math.round(grey));
+					}
+				}
+			}
+			var xValues = [];
+			var yValues = [];
+			var barColors = [];
+			for (i = 0; i < 256; i += 1) {
+					xValues.push(i);
+					yValues.push(0);
+					if(i == select)
+					{
+						barColors.push("red");
+					}
+					barColors.push("blue");
+			}
+
+			for (i = 0; i < img.height; i += 1) {
+				grayScaleValue.push([]);
+				for(j=0;j<img.width;j += 1){
+					var imgData = ctx.getImageData(j,i, 1, 1);
+					var grey = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+					var index = Math.round(grey);
+					yValues[index] = yValues[index]+1
+				}
+			}
+
+			for (i=select+1;i<256;i +=1){
+				yValues[i] = 0;
+			}
+
+			new Chart("myHistogram", {
+			type: "bar",
+			data: {
+				labels: xValues,
+				datasets: [{
+				backgroundColor: barColors,
+				data: yValues
+				}]
+			},
+			options: {
+				responsive: true,
+				legend: {display: false},
+				title: {
+				display: true,
+				text: "Histogram"
+				},
+				scales: {
+							yAxes: [{
+									display: true,
+									ticks: {
+										beginAtZero: false,
+										steps: 10,
+										stepValue: 5,
+										max: 7
+									}
+								}]
+				},
+				animation: {
+							duration: 0
+				}
+				
+			}
+			});
+			if(select == 255){
+				isHistogramFinish = true;
+				histogramX = xValues;
+				histogramY = yValues;
+			}
+			select++;
+		}
+		else if(!isHistogramRescaleFinish){
+			barColors = [];
+			for(i=0;i<256;i+=1){
+				barColors[i]="blue"
+			}
+			new Chart("myHistogramRescale", {
+			type: "bar",
+			data: {
+				labels: histogramX,
+				datasets: [{
+				backgroundColor: barColors,
+				data: histogramY
+				}]
+			},
+			options: {
+				responsive: true,
+				legend: {display: false},
+				title: {
+				display: true,
+				text: "Histogram"
+				},
+				scales: {
+							yAxes: [{
+									display: true,
+									ticks: {
+										beginAtZero: false,
+										steps: 10,
+										stepValue: 5,
+										max: 345
+									}
+								}]
+				},
+				animation: {
+							duration: 0
+				}
+				
+			}
+			});
+			isHistogramRescaleFinish = true;
+			select = 0;
+		}
+		else if(!isCHistogramFinish){
+			var barColors = [];
+			var sum = 0;
+			var yValues = []
+			for(i=0;i<256;i++){
+				if(i<=select){
+					barColors.push("red");
+					sum = sum + histogramY[i];
+					yValues.push(sum);
+				}
+				else{
+					barColors.push("blue");
+				}
+
+			}
+			new Chart("myHistogramRescale", {
+			type: "bar",
+			data: {
+				labels: histogramX,
+				datasets: [{
+				backgroundColor: barColors,
+				data: histogramY
+				}]
+			},
+			options: {
+				responsive: true,
+				legend: {display: false},
+				title: {
+				display: true,
+				text: "Histogram"
+				},
+				scales: {
+							yAxes: [{
+									display: true,
+									ticks: {
+										beginAtZero: false,
+										steps: 10,
+										stepValue: 5,
+										max: 345
+									}
+								}]
+				},
+				animation: {
+							duration: 0
+				}
+				
+			}
+			});
+
+			new Chart("myCHistogram", {
+			type: "bar",
+			data: {
+				labels: histogramX,
+				datasets: [{
+				backgroundColor: barColors,
+				data: yValues
+				}]
+			},
+			options: {
+				responsive: true,
+				legend: {display: false},
+				title: {
+				display: true,
+				text: "Histogram"
+				},
+				scales: {
+							yAxes: [{
+									display: true,
+									ticks: {
+										beginAtZero: false,
+										steps: 10,
+										stepValue: 5,
+										max: 345
+									}
+								}]
+				},
+				animation: {
+							duration: 0
+				}
+				
+			}
+			});
+
+			if(select == 255)
+			{
+				isCHistogramFinish = true;
+				select = 0;
+				cHistogramY = yValues;
+			}
+			// updateCSUMEquation(select,sum);
+			select++;
+		}
+		else{
+			var cmin = cHistogramY[0];
+			var cmax = cHistogramY[255];
+			var cdfv = cHistogramY[select];
+			var L = 256;
+			var result = Math.round(((cdfv-cmin)/(cmax-cmin))*(L-1));
+			// updateHEEquation(select,cdfv,cmin,cmax,L,result);
+			cLineY.push(result);
+
+			new Chart("myCLine", {
+			type: "line",
+			data: {
+				labels: histogramX,
+				datasets: [{
+					fill: false,
+					backgroundColor: "red",
+					data: cLineY
+				}]
+			},
+			options: {
+				responsive: true,
+				legend: {display: false},
+				title: {
+				display: true,
+				text: "CLine"
+				},
+				scales: {
+							yAxes: [{
+									display: true,
+									ticks: {
+										beginAtZero: false,
+										steps: 10,
+										stepValue: 5,
+										max: 255
+									}
+								}]
+				},
+				animation: {
+							duration: 0
+				}
+				
+			}
+			});
+			
+			
+			if(select == 255)
+			{
+				clearInterval(id);
+			}
+			select++;
+		}
+   }
+}
+
+function updateCSUMEquation(index, result)
+{
+    var formular = document.getElementById("CSUM_EQUATION");
+	var strFormular = "\\begin{equation*}cdf("+index+") = \\sum_{j=0}^{"+index+"} h(j) = "+result+"\\end{equation*}";
+	formular.innerHTML = strFormular;
+	MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.formula]);
+}
+
+function updateHEEquation(index, value, cmin,cmax,L,result)
+{
+    var formular = document.getElementById("HE_EQUATION");
+	var strFormular = "\\begin{equation*}h("+index+") = round\\left(\\frac{"+value+" - "+cmin+"}{("+cmax+") - "+cmin+"} \\times ("+L+" - 1)\\right) = "+result+"\\end{equation*}";
+	formular.innerHTML = strFormular;
+	MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.formula]);
+}
+
+// var slider = document.getElementById("myRange");
+// var sliderShow = document.getElementById("sliderShow");
+// slider.onchange = function(){delay = (101-slider.value)*5; sliderShow.innerHTML = slider.value * 5};
+
+ 
+</script>
+<footer>
+  <p>Author: Suppachai Nuthep<br>
+  <div style="font-size: 15px;">
+	  Email: <a href="ecoding.programming@gmail.com">ecoding.programming@gmail.com</a><br>
+	  Facebook: <a href="https://www.facebook.com/ECodingProgramming">ECoding</a><br>
+	  Youtube: <a href="https://youtu.be/k0lXXR-Ffo0">Ecoding chanel</a><br>
+	  ขอบคุณรูปภาพจาก:   <a href="https://www.freeimages.com/photo/sunset-1381672">https://www.freeimages.com/photo/sunset-1381672</a><br>
+  </div>
+  </p>
+</footer>
+</body>
+</html>

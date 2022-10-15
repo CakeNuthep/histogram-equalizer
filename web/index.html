@@ -138,8 +138,16 @@
 	</div>
 
 	<div>
+		<canvas id="myCLine" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	</div>
-	<canvas id="myCLine" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
+	<div>
+		ทำการแก้ค่าความแสงสีในรูปภาพ
+	</div>
+	<div>
+		<canvas id="myCanvasWithOriginalPixelValue" width="450" height="690" style="border:1px solid #d3d3d3;"></canvas>
+		<canvas id="myCanvasWithTranformPixelValue" width="450" height="690" style="border:1px solid #d3d3d3;"></canvas>
+	</div>
+
 	
 	<div class="slidecontainer" style="margin-bottom: 10em">
 		<p>Increate speed: <span id="sliderShow">500</span></p> 
@@ -188,12 +196,12 @@ var grayScaleValue = [];
 		}
 	  }
   }
-  anima3();
+  anima();
 };
 
 
 
-function anima3(){
+function anima(){
 	var id = setInterval(frame, delay);
 	var cMain = document.getElementById("myCanvasWithPixelValue");
 	var ctxMain = cMain.getContext("2d");
@@ -206,6 +214,7 @@ function anima3(){
 	var isHistogramFinish = false;
 	var isHistogramRescaleFinish = false;
 	var isCHistogramFinish = false;
+	var isCalHistogramEqualizationFinish = false;
 	var histogramX = [];
 	var histogramY = [];
 	var cHistogramY = [];
@@ -428,7 +437,7 @@ function anima3(){
 				legend: {display: false},
 				title: {
 				display: true,
-				text: "Histogram"
+				text: "Comulative Histogram"
 				},
 				scales: {
 							yAxes: [{
@@ -465,7 +474,7 @@ function anima3(){
 				id = setInterval(frame, delay);
 			}
 		}
-		else{
+		else if(!isCalHistogramEqualizationFinish){
 			var xValues = [];
 			for (const [key, value] of Object.entries(distributionImage)) {
 			  xValues.push(key);
@@ -522,12 +531,129 @@ function anima3(){
 			select++;
 			if(select >= xValues.length)
 			{
-				clearInterval(id);
+				isCalHistogramEqualizationFinish = true;
+				select = 0;
+				
 			}
 			else{
 				clearInterval(id);
 				id = setInterval(frame, delay);
 			}
+		}
+		else{
+				{
+					var xValues = [];
+					for (const [key, value] of Object.entries(distributionImage)) {
+						xValues.push(key);
+					}
+					var selectValue = xValues[select];
+					var cOrigin = document.getElementById("myCanvasWithOriginalPixelValue");
+					var ctxOrigin = cOrigin.getContext("2d");
+					cOrigin.width = zoomSize * img.width;
+					cOrigin.height = zoomSize * img.height;
+					
+					var i;
+					var j;
+					for (i = 0; i < img.height; i += 1) {
+						grayScaleValue.push([]);
+						for(j=0;j<img.width;j += 1){
+							var imgData = ctx.getImageData(j,i, 1, 1);
+							var gray = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+							var round_gray = Math.round(gray);
+							ctxOrigin.fillStyle = 'rgb(' + imgData.data[0] + ', ' +
+											imgData.data[1] + ', '+imgData.data[2]+')';
+							ctxOrigin.fillRect(j * zoomSize, i * zoomSize, zoomSize, zoomSize);
+							ctxOrigin.strokeStyle = 'black';
+							ctxOrigin.lineWidth = 5;
+							ctxOrigin.fillStyle = "white";
+							if(round_gray == selectValue){
+								ctxOrigin.fillStyle = "Red";
+								ctxOrigin.strokeStyle = 'Red';
+								ctxOrigin.lineWidth = 2;
+							}
+							ctxOrigin.font = "15px Kanit";
+							
+							ctxOrigin.strokeText(round_gray,j * zoomSize+3, i * zoomSize+13);
+							ctxOrigin.fillText(round_gray,j * zoomSize+3, i * zoomSize+13);
+							grayScaleValue[i].push(round_gray);
+							if(distributionImage[round_gray]){
+								distributionImage[round_gray] = distributionImage[round_gray] +1;
+							}
+							else{
+								distributionImage[round_gray] = 1;
+							}
+						}
+					}
+				}
+				{
+					var xValues = [];
+					for (const [key, value] of Object.entries(distributionImage)) {
+						xValues.push(key);
+					}
+					var heMAP = {}
+					for (i=0;i<xValues.length;i++){
+						heMAP[xValues[i]]=cLineY[i];
+					}
+					var selectValue = xValues[select];
+					var cOrigin = document.getElementById("myCanvasWithTranformPixelValue");
+					var ctxOrigin = cOrigin.getContext("2d");
+					cOrigin.width = zoomSize * img.width;
+					cOrigin.height = zoomSize * img.height;
+					
+					var i;
+					var j;
+					for (i = 0; i < img.height; i += 1) {
+						// grayScaleValue.push([]);
+						for(j=0;j<img.width;j += 1){
+							var imgData = ctx.getImageData(j,i, 1, 1);
+							var gray = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+							var origin_gray = Math.round(gray);
+							// var round_gray = cLineY[select];
+							ctxOrigin.fillStyle = 'rgb(' + imgData.data[0] + ', ' +
+											imgData.data[1] + ', '+imgData.data[2]+')';
+							if(origin_gray <= selectValue){
+								var new_value = heMAP[origin_gray];
+								ctxOrigin.fillStyle = 'rgb(' + new_value + ', ' +
+															new_value + ', '+new_value+')';
+							}
+							ctxOrigin.fillRect(j * zoomSize, i * zoomSize, zoomSize, zoomSize);
+							ctxOrigin.strokeStyle = 'black';
+							ctxOrigin.lineWidth = 5;
+							ctxOrigin.fillStyle = "white";
+							if(origin_gray <= selectValue){
+								var new_value = heMAP[origin_gray];
+								ctxOrigin.fillStyle = "Red";
+								ctxOrigin.strokeStyle = 'Red';
+								ctxOrigin.lineWidth = 2;
+								ctxOrigin.font = "15px Kanit";
+								ctxOrigin.strokeText(new_value,j * zoomSize+3, i * zoomSize+13);
+								ctxOrigin.fillText(new_value,j * zoomSize+3, i * zoomSize+13);
+							}
+							else{
+								ctxOrigin.font = "15px Kanit";
+								
+								ctxOrigin.strokeText(origin_gray,j * zoomSize+3, i * zoomSize+13);
+								ctxOrigin.fillText(origin_gray,j * zoomSize+3, i * zoomSize+13);
+							}
+							// grayScaleValue[i].push(origin_gray);
+							// if(distributionImage[origin_gray]){
+							// 	distributionImage[origin_gray] = distributionImage[origin_gray] +1;
+							// }
+							// else{
+							// 	distributionImage[origin_gray] = 1;
+							// }
+						}
+					}
+				}
+				select++;
+				if(select >= xValues.length){
+					clearInterval(id);
+				}
+				else{
+					clearInterval(id);
+					id = setInterval(frame, delay);
+				}
+			
 		}
    }
 }

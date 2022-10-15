@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/animejs@3.0.1/lib/anime.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 <head>
 <style>
 	#myKernel   {position: absolute;}
@@ -203,7 +202,7 @@ function anima3(){
 	var ctx = c.getContext("2d");
 	var select = 0;
 	
-
+	var distributionImage = {};
 	var isHistogramFinish = false;
 	var isHistogramRescaleFinish = false;
 	var isCHistogramFinish = false;
@@ -224,23 +223,30 @@ function anima3(){
 					grayScaleValue.push([]);
 					for(j=0;j<img.width;j += 1){
 						var imgData = ctx.getImageData(j,i, 1, 1);
-						var grey = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+						var gray = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+						var round_gray = Math.round(gray);
 						ctxMain.fillStyle = 'rgb(' + imgData.data[0] + ', ' +
 										imgData.data[1] + ', '+imgData.data[2]+')';
 						ctxMain.fillRect(j * zoomSize, i * zoomSize, zoomSize, zoomSize);
 						ctxMain.strokeStyle = 'black';
 						ctxMain.lineWidth = 5;
 						ctxMain.fillStyle = "white";
-						if(Math.round(grey) == select){
+						if(round_gray == select){
 							ctxMain.fillStyle = "Red";
 							ctxMain.strokeStyle = 'Red';
 							ctxMain.lineWidth = 2;
 						}
 						ctxMain.font = "15px Kanit";
 						
-						ctxMain.strokeText(Math.round(grey),j * zoomSize+3, i * zoomSize+13);
-						ctxMain.fillText(Math.round(grey),j * zoomSize+3, i * zoomSize+13);
-						grayScaleValue[i].push(Math.round(grey));
+						ctxMain.strokeText(round_gray,j * zoomSize+3, i * zoomSize+13);
+						ctxMain.fillText(round_gray,j * zoomSize+3, i * zoomSize+13);
+						grayScaleValue[i].push(round_gray);
+						if(distributionImage[round_gray]){
+							distributionImage[round_gray] = distributionImage[round_gray] +1;
+						}
+						else{
+							distributionImage[round_gray] = 1;
+						}
 					}
 				}
 			}
@@ -445,33 +451,41 @@ function anima3(){
 			if(select == 255)
 			{
 				isCHistogramFinish = true;
-				select = minPixel;
+				select = 0;
 				cHistogramY = yValues;
-				for(i=0;i<minPixel;i++){
-					cLineY.push(0);
-				}
+
+				// for(i=0;i<minPixel;i++){
+				// 	cLineY.push(0);
+				// }
 			}
+			else{
 			// updateCSUMEquation(select,sum);
-			select++;
-			clearInterval(id);
-			id = setInterval(frame, delay);
+				select++;
+				clearInterval(id);
+				id = setInterval(frame, delay);
+			}
 		}
 		else{
+			var xValues = [];
+			for (const [key, value] of Object.entries(distributionImage)) {
+			  xValues.push(key);
+			}
+			selectDistribute = xValues[select];
 			var cmin = cHistogramY[minPixel];
 			var cmax = cHistogramY[255];
 			var MN = img.height * img.width;
-			var cdfv = cHistogramY[select];
+			var cdfv = cHistogramY[selectDistribute];
 			var L = 256;
 			var result = Math.round(((cdfv-cmin)/(MN-cmin))*(L-1));
 			// updateHEEquation(select,cdfv,cmin,cmax,L,result);
-			updateHEEquation2(select,cdfv,cmin,cmax,img.height,img.width,L,result);
+			updateHEEquation(selectDistribute,cdfv,cmin,cmax,img.height,img.width,L,result);
 
 			cLineY.push(result);
 
 			new Chart("myCLine", {
 			type: "line",
 			data: {
-				labels: histogramX,
+				labels: xValues,
 				datasets: [{
 					fill: false,
 					backgroundColor: "red",
@@ -506,7 +520,7 @@ function anima3(){
 			
 			
 			select++;
-			if(select > 255)
+			if(select >= xValues.length)
 			{
 				clearInterval(id);
 			}
@@ -518,22 +532,8 @@ function anima3(){
    }
 }
 
-function updateCSUMEquation(index, result)
-{
-    var formular = document.getElementById("CSUM_EQUATION");
-	var strFormular = "\\begin{equation*}cdf("+index+") = \\sum_{j=0}^{"+index+"} h(j) = "+result+"\\end{equation*}";
-	formular.innerHTML = strFormular;
-	MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.formula]);
-}
 
-function updateHEEquation(index, value, cmin,cmax,L,result)
-{
-    var formular = document.getElementById("HE_EQUATION");
-	var strFormular = "\\begin{equation*}h("+index+") = round\\left(\\frac{"+value+" - "+cmin+"}{("+cmax+") - "+cmin+"} \\times ("+L+" - 1)\\right) = "+result+"\\end{equation*}";
-	formular.innerHTML = strFormular;
-	MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.formula]);
-}
-function updateHEEquation2(index, value, cmin,cmax,M,N,L,result)
+function updateHEEquation(index, value, cmin,cmax,M,N,L,result)
 {
     var formular = document.getElementById("HE_EQUATION_ANIME");
 	var strFormular = `h(${index}) = round((cdf(${index}) - ${cmin})/((${M} * ${N}) - ${cmin}) * (${L} - 1)) = ${result}`;

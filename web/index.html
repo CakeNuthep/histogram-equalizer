@@ -103,11 +103,11 @@
 	<div>
 		ตอนแรกเราจะทำ Histogram ก่อน หรือก็คือการนับค่าสีที่เท่ากันว่ามีกี่จำนวนบ้าง
 	</div>
-	<canvas id="myHistogram" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<canvas id="myHistogram" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	<div>
 		หลังจากได้ Histogram แล้ว เพื่อให้เห็นภาพมากขึ้นขอขยายค่า กราฟแกน Y เป็น 345
 	</div>
-	<canvas id="myHistogramRescale" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<canvas id="myHistogramRescale" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	<div>
 		หลังจากนั้นทำ Comulative Histogram ดังนี้
 	</div>
@@ -116,7 +116,7 @@
 	 \end{equation*}</div>
 	<div>
 	</div>
-	<canvas id="myCHistogram" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<canvas id="myCHistogram" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 
 	 <div>
 		เมื่อได้ Comulative Histogram แล้วก็นำมาคำนวณ histogram equalization ดังนี้
@@ -124,15 +124,28 @@
 	 <div id="HE_EQUATION" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">\begin{equation*}
 		h(v) = round\left(\frac{cdf(v) - cdf_{min}}{(M \times N) - cdf_{min}} \times (L - 1)\right)
 	 \end{equation*}</div>
-
-	 <div>
 	</div>
-	<canvas id="myCLine" width="3080" height="720" style="border:1px solid #d3d3d3;"></canvas>
+	<div id="HE_EQUATION_ANIME" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">
+	   h(v) = round((cdf(v) - cdf_min)/((M * N) - cdf_min) * (L - 1))
+	</div>
+	<div>
+		<!-- Note: M is the number of rows and N is the number of columns in the image. -->
+		<b>Note:</b><br>
+			<b>M</b> คือ จำนวน Pixel ในแนวตั้งของรูปภาพ ในตัวอย่างนี้มีค่า 23<br>
+			<b>N</b> คือ จำนวน Pixel ในแนวนอนของรูปภาพ ในตัวอย่างนี้มีค่า 15<br>
+			<b>L</b> คือ ค่าของ ความสว่างของแสงสีใน Pixel ที่เป็นไปได้ทั้งหมด ในตัวอย่างนี้คือ 256 เพราะว่าค่าของแสงสว่างในรูปภาพขาวดำมีค่าตั้งแต่ 0 ถึง 255<br>
+			<b>cdf_min</b> คือ ค่าที่น้อยที่สุดที่ได้จากการทำ Comulative ในตัวอย่างนี้มีค่าเป็น 1
+
+	</div>
+
+	<div>
+	</div>
+	<canvas id="myCLine" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	
-	<!-- <div class="slidecontainer" style="margin-bottom: 10em">
+	<div class="slidecontainer" style="margin-bottom: 10em">
 		<p>Increate speed: <span id="sliderShow">5</span></p> 
 		<input type="range" min="1" max="100" value="1" class="slider" id="myRange">
-	</div> -->
+	</div>
 	
 </div>
 
@@ -182,7 +195,7 @@ var grayScaleValue = [];
 
 
 function anima3(){
-	var id = setInterval(frame, 200);
+	var id = setInterval(frame, delay);
 	var cMain = document.getElementById("myCanvasWithPixelValue");
 	var ctxMain = cMain.getContext("2d");
 
@@ -198,6 +211,7 @@ function anima3(){
 	var histogramY = [];
 	var cHistogramY = [];
 	var cLineY = [];
+	var minPixel = 256;
    function frame() {
 		if(!isHistogramFinish){
 			{
@@ -247,9 +261,12 @@ function anima3(){
 				grayScaleValue.push([]);
 				for(j=0;j<img.width;j += 1){
 					var imgData = ctx.getImageData(j,i, 1, 1);
-					var grey = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
-					var index = Math.round(grey);
+					var gray = (imgData.data[0]*0.3) + (imgData.data[1]*0.59)+(imgData.data[2]*0.11);
+					var index = Math.round(gray);
 					yValues[index] = yValues[index]+1
+					if(gray < minPixel){
+						minPixel = gray;
+					}
 				}
 			}
 
@@ -296,6 +313,8 @@ function anima3(){
 				histogramY = yValues;
 			}
 			select++;
+			clearInterval(id);
+			id = setInterval(frame, delay);
 		}
 		else if(!isHistogramRescaleFinish){
 			barColors = [];
@@ -337,6 +356,8 @@ function anima3(){
 			});
 			isHistogramRescaleFinish = true;
 			select = 0;
+			clearInterval(id);
+			id = setInterval(frame, delay);
 		}
 		else if(!isCHistogramFinish){
 			var barColors = [];
@@ -424,19 +445,27 @@ function anima3(){
 			if(select == 255)
 			{
 				isCHistogramFinish = true;
-				select = 0;
+				select = minPixel;
 				cHistogramY = yValues;
+				for(i=0;i<minPixel;i++){
+					cLineY.push(0);
+				}
 			}
 			// updateCSUMEquation(select,sum);
 			select++;
+			clearInterval(id);
+			id = setInterval(frame, delay);
 		}
 		else{
-			var cmin = cHistogramY[0];
+			var cmin = cHistogramY[minPixel];
 			var cmax = cHistogramY[255];
+			var MN = img.height * img.width;
 			var cdfv = cHistogramY[select];
 			var L = 256;
-			var result = Math.round(((cdfv-cmin)/(cmax-cmin))*(L-1));
+			var result = Math.round(((cdfv-cmin)/(MN-cmin))*(L-1));
 			// updateHEEquation(select,cdfv,cmin,cmax,L,result);
+			updateHEEquation2(select,cdfv,cmin,cmax,img.height,img.width,L,result);
+
 			cLineY.push(result);
 
 			new Chart("myCLine", {
@@ -475,11 +504,16 @@ function anima3(){
 			});
 			
 			
-			if(select == 255)
+			
+			select++;
+			if(select > 255)
 			{
 				clearInterval(id);
 			}
-			select++;
+			else{
+				clearInterval(id);
+				id = setInterval(frame, delay);
+			}
 		}
    }
 }
@@ -499,10 +533,16 @@ function updateHEEquation(index, value, cmin,cmax,L,result)
 	formular.innerHTML = strFormular;
 	MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.formula]);
 }
+function updateHEEquation2(index, value, cmin,cmax,M,N,L,result)
+{
+    var formular = document.getElementById("HE_EQUATION_ANIME");
+	var strFormular = `h(${index}) = round((cdf(${index}) - ${cmin})/((${M} * ${N}) - ${cmin}) * (${L} - 1)) = ${result}`;
+	formular.innerHTML = strFormular;
+}
 
-// var slider = document.getElementById("myRange");
-// var sliderShow = document.getElementById("sliderShow");
-// slider.onchange = function(){delay = (101-slider.value)*5; sliderShow.innerHTML = slider.value * 5};
+var slider = document.getElementById("myRange");
+var sliderShow = document.getElementById("sliderShow");
+slider.onchange = function(){delay = (101-slider.value)*5; sliderShow.innerHTML = slider.value * 5};
 
  
 </script>

@@ -74,8 +74,15 @@
   <p>Image processing</p>
 </div>
 <div>
-    สวัสดีครับ เว็บนี้จะเป็นเว็บที่อธิบายการทำงานในส่วนของ Image processing ในเรื่องของการทำ Histogram Equalization กัน
-สมมุติว่าเรามีรูปภาพทะเลดังรูปด้านล่าง
+    สวัสดีครับ เว็บนี้จะเป็นเว็บที่อธิบายการทำงานในส่วนของ Image processing ในเรื่องของการทำ Histogram Equalization หรือก็คือกระบวนการปรับความสว่างของรูปภาพวิธีหนึ่งเพื่อให้เห็นรายละเอียดของภาพได้ดีขึ้น
+</div>
+<div>
+	<img src="img/Origin Image.png"  alt="The sea" >
+	<img src="img/HE Image.png"  alt="The sea" >
+</div>
+<div>
+	ผมขอย่อขนาดรูปภาพเป็นรูปด้านล่าง
+	<!-- สมมุติว่าเรามีรูปภาพทะเลดังรูปด้านล่าง -->
 </div>
 <div>
 	<img id="sea" src=""  alt="The sea" >
@@ -104,7 +111,7 @@
 	</div>
 	<canvas id="myHistogram" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	<div>
-		จาก Histogram ในตัวอย่างด้านบนจะเห็นว่า มี Pixel มีที่มีค่า 19 อยู่ 1 จำนวน, มี Pixel ที่มีค่า 21 อยู่ 2 จำนวน, มี Pixel ที่มีค่า 22 อยู่ 1 จำนวน เป็นด้น<br>
+		จาก Histogram ในตัวอย่างด้านบนจะเห็นว่า มี Pixel มีที่มีค่า 6 อยู่ 3 จำนวน, มี Pixel ที่มีค่า 7 อยู่ 1 จำนวน, มี Pixel ที่มีค่า 8 อยู่ 4 จำนวน เป็นด้น<br>
 		หลังจากได้ Histogram แล้ว เพื่อให้เห็นภาพมากขึ้นขอขยายกราฟแกน Y เป็นกราฟด้านล่าง
 	</div>
 	<canvas id="myHistogramRescale" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
@@ -171,7 +178,7 @@ var duration = 10;
 var delay = 5;
 var zoomSize = 30;
 var img = document.getElementById("sea");
-img.src = "img\\HE Image resize.png";
+img.src = "img\\Origin Image resize.png";
   img.onload = function() {
   var c = document.getElementById("myCanvas");
   var ctx = c.getContext("2d");
@@ -308,7 +315,7 @@ function anima(){
 										beginAtZero: false,
 										steps: 10,
 										stepValue: 5,
-										max: 7
+										max: 20
 									}
 								}]
 				},

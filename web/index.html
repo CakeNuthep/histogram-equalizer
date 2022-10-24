@@ -379,16 +379,24 @@ function anima(){
 		}
 		else if(!isCHistogramFinish){
 			var barColors = [];
+			var cBarColors = [];
 			var sum = 0;
 			var yValues = []
 			for(i=0;i<256;i++){
-				if(i==select){
+				if(i<=select){
 					barColors.push("red");
 					sum = sum + histogramY[i];
 					yValues.push(sum);
+					if(i == select){
+						cBarColors.push("red");
+					}
+					else{
+						cBarColors.push("blue");
+					}
 				}
 				else{
 					barColors.push("blue");
+					cBarColors.push("blue");
 				}
 
 			}
@@ -431,7 +439,7 @@ function anima(){
 			data: {
 				labels: histogramX,
 				datasets: [{
-				backgroundColor: barColors,
+				backgroundColor: cBarColors,
 				data: yValues
 				}]
 			},

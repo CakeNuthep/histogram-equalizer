@@ -382,7 +382,7 @@ function anima(){
 			var sum = 0;
 			var yValues = []
 			for(i=0;i<256;i++){
-				if(i<=select){
+				if(i==select){
 					barColors.push("red");
 					sum = sum + histogramY[i];
 					yValues.push(sum);

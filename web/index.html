@@ -116,7 +116,7 @@
 	</div>
 	<canvas id="myHistogramRescale" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 	<div>
-		หลังจากได้ Histogram ก็มาทำ Comulative Histogram ดังนี้
+		หลังจากได้ Histogram ก็มาทำ Cumulative Histogram ดังนี้
 	</div>
 	<div id="CSUM_EQUATION" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">\begin{equation*}
 		cdf(i) = \sum_{j=0}^i h(j)
@@ -126,7 +126,7 @@
 	<canvas id="myCHistogram" width="1080" height="240" style="border:1px solid #d3d3d3;"></canvas>
 
 	 <div>
-		เมื่อได้ Comulative Histogram แล้วก็นำมาคำนวณ Histogram Equalization ดังนี้
+		เมื่อได้ Cumulative Histogram แล้วก็นำมาคำนวณ Histogram Equalization ดังนี้
 	</div>
 	 <div id="HE_EQUATION" style="font-family:Kanit,Arial, Helvetica, sans-serif;font-size:20px;font-weight: bold;">\begin{equation*}
 		h(v) = round\left(\frac{cdf(v) - cdf_{min}}{(M \times N) - cdf_{min}} \times (L - 1)\right)
